@@ -4,37 +4,49 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
+
+	"github.com/notnil/chess"
 )
 
-func main() {
-	fmt.Println("Welcome to GoChess!")
-	fmt.Println("Type 'help' for commands")
+// TODO: this works only on linux, change later
+func clear() {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
 
+func main() {
+	clear()
+
+	game := chess.NewGame()
 	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		fmt.Print("> ")
+
+	for game.Outcome() == chess.NoOutcome {
+
+		fmt.Println(game.Position().Board().Draw())
+
+		if game.Position().Turn() == chess.White {
+			fmt.Print("White>")
+		} else {
+			fmt.Print("Black>")
+		}
+
 		if !scanner.Scan() {
 			break
 		}
 
 		input := strings.TrimSpace(scanner.Text())
-		if input == "quit" || input == "exit" {
-			break
-		}
 
-		if input == "help" {
-			printHelp()
+		clear()
+
+		if err := game.MoveStr(input); err != nil {
+			fmt.Println("Invalid move:", err)
 			continue
 		}
-
-		fmt.Println(input)
 	}
-}
 
-func printHelp() {
-	fmt.Println("Commands:")
-	fmt.Println("  <from> <to> - make a move (e.g., 'e2 e4')")
-	fmt.Println("  help - show this help")
-	fmt.Println("  quit/exit - quit the game")
+	fmt.Println(game.Position().Board().Draw())
+	fmt.Println("Game over. Result:", game.Outcome(), "Method:", game.Method())
 }
