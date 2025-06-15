@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Basic game loop to read from stdin
+- [x] Basic game loop to read from stdin
 - [ ] Display board and accept moves with [github.com/notnil/chess](https://github.com/notnil/chess)
 - [ ] Module for chess pieces and game logic
 - [ ] Custom UI for chessboard based on ASCII art
