@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/astatochek/gochess/assets"
 	"github.com/notnil/chess"
 )
 
@@ -25,7 +26,8 @@ func main() {
 
 	for game.Outcome() == chess.NoOutcome {
 
-		fmt.Println(game.Position().Board().Draw())
+		// fmt.Println(game.Position().Board().Draw())
+		fmt.Println(assets.DrawBoard(game.Position().Board()))
 
 		if game.Position().Turn() == chess.White {
 			fmt.Print("White>")
@@ -47,6 +49,6 @@ func main() {
 		}
 	}
 
-	fmt.Println(game.Position().Board().Draw())
+	// fmt.Println(game.Position().Board().Draw())
 	fmt.Println("Game over. Result:", game.Outcome(), "Method:", game.Method())
 }
