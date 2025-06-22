@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/notnil/chess"
@@ -67,19 +68,24 @@ var (
 type model struct {
 	game      *chess.Game
 	error     error
-	moveInput string
 	width     int
 	height    int
+	textInput textinput.Model
 }
 
 func initialModel() model {
+	ti := textinput.New()
+	ti.Prompt = "Enter move: "
+	ti.CharLimit = 4
+	ti.Focus()
 	return model{
-		game: chess.NewGame(),
+		game:      chess.NewGame(),
+		textInput: ti,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -93,30 +99,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-			if m.game.Outcome() != chess.NoOutcome {
-				return m, nil
-			}
-			err := m.game.MoveStr(m.moveInput)
+			err := m.game.MoveStr(m.textInput.Value())
 			if err != nil {
 				m.error = err
 			} else {
 				m.error = nil
-			}
-			m.moveInput = ""
-			return m, nil
-		case tea.KeyBackspace:
-			if len(m.moveInput) > 0 {
-				m.moveInput = m.moveInput[:len(m.moveInput)-1]
-			}
-			return m, nil
-		case tea.KeyRunes:
-			if m.game.Outcome() == chess.NoOutcome {
-				m.moveInput += string(msg.Runes)
+				m.textInput.Reset() // Clear input after successful move
 			}
 			return m, nil
 		}
 	}
-	return m, nil
+
+	var cmd tea.Cmd
+	m.textInput, cmd = m.textInput.Update(msg)
+	return m, cmd
 }
 
 func (m model) View() string {
@@ -151,12 +147,26 @@ func (m model) View() string {
 
 		turnStatus := turnStyle.Render(fmt.Sprint(turn)) + statusMessageStyle.Render(" to move")
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, turnStatus))
-		sb.WriteString("\n\n")
+		sb.WriteString("\n")
 
-		// Move input
-		inputPrompt := "Enter move (e.g. e2e4):\n" + m.moveInput + "_"
-		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, inputPrompt))
+		inputWidth := 16 // Fixed width for input area
+		inputContainer := lipgloss.NewStyle().
+			Width(inputWidth).
+			Align(lipgloss.Left)
 
+		// Build the input line
+		inputLine := lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			inputContainer.Render(m.textInput.View()),
+		)
+
+		// Center the entire line
+		centeredInput := lipgloss.PlaceHorizontal(
+			m.width,
+			lipgloss.Center,
+			inputLine,
+		)
+		sb.WriteString("\n" + centeredInput)
 		// Error message
 		if m.error != nil {
 			sb.WriteString("\n\n")
