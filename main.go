@@ -14,39 +14,45 @@ var (
 
 	titleStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#25A065")).
+			Background(lipgloss.Color("#779556")).
 			Padding(0, 1)
 
 	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"})
+				Foreground(lipgloss.AdaptiveColor{Light: "#779556", Dark: "#779556"})
 
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000"))
 
 	lightSquare = lipgloss.NewStyle().
 			Background(lipgloss.Color("#EBECD0")).
-			Foreground(lipgloss.Color("#000000")).
-			Padding(0, 1)
+			Width(3).
+			Align(lipgloss.Center)
 
 	darkSquare = lipgloss.NewStyle().
 			Background(lipgloss.Color("#779556")).
-			Foreground(lipgloss.Color("#FFFFFF")).
-			Padding(0, 1)
+			Width(3).
+			Align(lipgloss.Center)
 
-	// Unicode piece symbols
-	pieceSymbols = map[chess.Piece]string{
-		chess.WhiteKing:   "♔",
-		chess.WhiteQueen:  "♕",
-		chess.WhiteRook:   "♖",
-		chess.WhiteBishop: "♗",
-		chess.WhiteKnight: "♘",
-		chess.WhitePawn:   "♙",
-		chess.BlackKing:   "♚",
-		chess.BlackQueen:  "♛",
-		chess.BlackRook:   "♜",
-		chess.BlackBishop: "♝",
-		chess.BlackKnight: "♞",
-		chess.BlackPawn:   "♟",
+	whitePiece = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFFFFF"))
+
+	blackPiece = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#000000"))
+
+	// Piece notation (all uppercase)
+	pieceNotation = map[chess.Piece]string{
+		chess.WhiteKing:   "K",
+		chess.WhiteQueen:  "Q",
+		chess.WhiteRook:   "R",
+		chess.WhiteBishop: "B",
+		chess.WhiteKnight: "N",
+		chess.WhitePawn:   "P",
+		chess.BlackKing:   "K",
+		chess.BlackQueen:  "Q",
+		chess.BlackRook:   "R",
+		chess.BlackBishop: "B",
+		chess.BlackKnight: "N",
+		chess.BlackPawn:   "P",
 	}
 )
 
@@ -113,7 +119,7 @@ func (m model) View() string {
 	var sb strings.Builder
 
 	// Title
-	title := titleStyle.Render("Chess Terminal")
+	title := titleStyle.Render("Go Chess")
 	sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, title))
 	sb.WriteString("\n\n")
 
@@ -168,44 +174,55 @@ func renderBoard(game *chess.Game, width int) string {
 	board := game.Position().Board()
 	var sb strings.Builder
 
-	// File labels
-	files := "   a  b  c  d  e  f  g  h"
-	sb.WriteString(lipgloss.PlaceHorizontal(width, lipgloss.Center, files))
+	// The complete board line (including rank numbers) is exactly 26 characters:
+	// 2 (left rank) + 24 (8 squares × 3 chars) + 2 (right rank) = 28 chars
+	boardLineWidth := 28
+
+	// Center the entire board block
+	boardIndent := max((width-boardLineWidth)/2, 0)
+	indentStr := strings.Repeat(" ", boardIndent)
+
+	// File labels - perfectly aligned under squares
+	files := strings.Join([]string{"", "a", "b", "c", "d", "e", "f", "g", "h", ""}, "  ")
+	centeredFiles := lipgloss.PlaceHorizontal(width, lipgloss.Center, files)
+	sb.WriteString(centeredFiles)
 	sb.WriteString("\n")
 
 	for rank := 7; rank >= 0; rank-- {
-		var rankLine strings.Builder
-		rankLine.WriteString(fmt.Sprintf("%d ", rank+1))
+		sb.WriteString(indentStr)
+		sb.WriteString(fmt.Sprintf("%d ", rank+1))
 
 		for file := range 8 {
 			sq := chess.Square(file + rank*8)
 			piece := board.Piece(sq)
 
-			var style lipgloss.Style
+			var squareStyle, pieceStyle lipgloss.Style
 			if (file+rank)%2 == 0 {
-				style = darkSquare
+				squareStyle = darkSquare
 			} else {
-				style = lightSquare
+				squareStyle = lightSquare
+			}
+
+			if piece != chess.NoPiece && piece.Color() == chess.White {
+				pieceStyle = whitePiece
+			} else {
+				pieceStyle = blackPiece
 			}
 
 			if piece == chess.NoPiece {
-				rankLine.WriteString(style.Render(" "))
+				sb.WriteString(squareStyle.Render(" "))
 			} else {
-				symbol, exists := pieceSymbols[piece]
-				if !exists {
-					symbol = "?"
-				}
-				rankLine.WriteString(style.Render(symbol))
+				notation := pieceNotation[piece]
+				sb.WriteString(squareStyle.Render(pieceStyle.Render(notation)))
 			}
 		}
 
-		rankLine.WriteString(fmt.Sprintf(" %d", rank+1))
-		sb.WriteString(lipgloss.PlaceHorizontal(width, lipgloss.Center, rankLine.String()))
+		sb.WriteString(fmt.Sprintf(" %d", rank+1))
 		sb.WriteString("\n")
 	}
 
-	// File labels
-	sb.WriteString(lipgloss.PlaceHorizontal(width, lipgloss.Center, files))
+	// File labels (same as top)
+	sb.WriteString(centeredFiles)
 	return sb.String()
 }
 
