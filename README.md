@@ -9,3 +9,5 @@
 - [ ] Add piece movement with board interaction
 - [ ] Stockfish as an opponent
 - [ ] Online mode???
+
+![Example](./demo.png)
