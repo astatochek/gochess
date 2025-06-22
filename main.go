@@ -14,22 +14,22 @@ var (
 
 	titleStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#779556")).
+			Background(lipgloss.Color("#BC7342")).
 			Padding(0, 1)
 
 	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#779556", Dark: "#779556"})
+				Foreground(lipgloss.AdaptiveColor{Light: "#BC7342", Dark: "#BC7342"})
 
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF0000"))
 
 	lightSquare = lipgloss.NewStyle().
-			Background(lipgloss.Color("#EBECD0")).
+			Background(lipgloss.Color("#DEBA90")).
 			Width(3).
 			Align(lipgloss.Center)
 
 	darkSquare = lipgloss.NewStyle().
-			Background(lipgloss.Color("#779556")).
+			Background(lipgloss.Color("#BC7342")).
 			Width(3).
 			Align(lipgloss.Center)
 
@@ -54,6 +54,14 @@ var (
 		chess.BlackKnight: "N",
 		chess.BlackPawn:   "P",
 	}
+
+	turnWhite = lipgloss.NewStyle().
+			Background(lipgloss.Color("#BC7342")).
+			Foreground(lipgloss.Color("#FFFFFF"))
+
+	turnBlack = lipgloss.NewStyle().
+			Background(lipgloss.Color("#BC7342")).
+			Foreground(lipgloss.Color("#000000"))
 )
 
 type model struct {
@@ -134,12 +142,14 @@ func (m model) View() string {
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, status))
 	} else {
 		// Current turn
+		turnStyle := turnWhite
 		turn := "White"
 		if m.game.Position().Turn() == chess.Black {
+			turnStyle = turnBlack
 			turn = "Black"
 		}
 
-		turnStatus := statusMessageStyle.Render(fmt.Sprintf("%s to move", turn))
+		turnStatus := turnStyle.Render(fmt.Sprint(turn)) + statusMessageStyle.Render(" to move")
 		sb.WriteString(lipgloss.PlaceHorizontal(m.width, lipgloss.Center, turnStatus))
 		sb.WriteString("\n\n")
 
